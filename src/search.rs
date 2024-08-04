@@ -13,6 +13,17 @@ impl SearchEngine {
         }
     }
 
+    pub fn index_page(&mut self, url: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let content = load_page(url)?;
+        let text = extract_text(&content);
+        let words = text.split_whitespace().map(str::to_lowercase);
+
+        for word in words {
+            self.index.entry(word).or_default().push(url.to_string());
+        }
+        Ok(())
+    }
+
     pub fn search(&self, query: &str) -> Vec<String> {
         let query_words: Vec<String> = query.split_whitespace().map(str::to_lowercase).collect();
         let mut results: HashMap<String, usize> = HashMap::new();
