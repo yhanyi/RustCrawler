@@ -2,7 +2,6 @@ use std::collections::VecDeque;
 use std::sync::{ Arc, Mutex };
 use std::thread;
 use reqwest;
-use url::Url;
 use crate::parser::extract_links;
 use crate::storage::store_page;
 
@@ -21,8 +20,9 @@ impl Crawler {
 
     pub fn crawl(&self) {
         let mut handles = vec![];
+
         for _ in 0..4 {
-            // Using 4 threads for crawling
+            // Use 4 threads for crawling
             let to_visit = Arc::clone(&self.to_visit);
             let visited = Arc::clone(&self.visited);
             let max_depth = self.max_depth;
@@ -31,14 +31,14 @@ impl Crawler {
                 while
                     let Some(url) = ({
                         let mut queue = to_visit.lock().unwrap();
-                        queue.pop_front();
+                        queue.pop_front()
                     })
                 {
                     if visited.lock().unwrap().contains(&url) {
                         continue;
                     }
 
-                    match self.fetch_and_process_url(&url, max_depth) {
+                    match fetch_and_process_url(&url, max_depth) {
                         Ok(new_urls) => {
                             let mut queue = to_visit.lock().unwrap();
                             queue.extend(new_urls);
@@ -48,6 +48,7 @@ impl Crawler {
                     }
                 }
             });
+
             handles.push(handle);
         }
 
@@ -55,19 +56,18 @@ impl Crawler {
             handle.join().unwrap();
         }
     }
+}
 
-    fn fetch_and_process_url(
-        &self,
-        url: &str,
-        depth: usize
-    ) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-        let content = self.fetch_url(url)?;
-        store_page(url, &content)?;
-        let new_urls = if depth > 0 { extract_links(&content, url)? } else { vec![] };
-        Ok(new_urls)
-    }
+fn fetch_and_process_url(
+    url: &str,
+    depth: usize
+) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    let content = fetch_url(url)?;
+    store_page(url, &content)?;
+    let new_urls = if depth > 0 { extract_links(&content, url)? } else { vec![] };
+    Ok(new_urls)
+}
 
-    fn fetch_url(&self, url: &str) -> Result<String, reqwest::Error> {
-        reqwest::blocking::get(url)?.text()
-    }
+fn fetch_url(url: &str) -> Result<String, reqwest::Error> {
+    reqwest::blocking::get(url)?.text()
 }
