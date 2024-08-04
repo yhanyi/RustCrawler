@@ -1,17 +1,19 @@
+// web_interface.rs
 use rocket::{ self, get, post, routes };
-use rocket::response::content::RawHtml;
 use rocket::form::Form;
+use rocket::FromForm;
+use rocket::response::content::RawHtml;
 use crate::search::SearchEngine;
 
 #[get("/")]
 fn index() -> RawHtml<&'static str> {
     RawHtml(
         r#"
-    <form action="/search" method="post">
-      <input type="text" name="query">
-      <input type="submit" value="Search">
-    </form>
-  "#
+        <form action="/search" method="post">
+            <input type="text" name="query">
+            <input type="submit" value="Search">
+        </form>
+    "#
     )
 }
 
@@ -35,10 +37,12 @@ fn search(
     RawHtml(
         format!(
             r#"
-        <h1>Search results for "{}"</h1>
-        <ul>{}</ul>
+        <h1>Search Results for "{}"</h1>
+        <ul>
+            {}
+        </ul>
         <a href="/">Back to Search</a>
-      "#,
+        "#,
             search_query.query,
             results_html
         )
@@ -46,6 +50,6 @@ fn search(
 }
 
 pub fn launch(search_engine: SearchEngine) -> Result<(), Box<dyn std::error::Error>> {
-    rocket::build().manage(search_engine).mount("/", routes![index, search]).launch()?;
+    rocket::build().manage(search_engine).mount("/", routes![index, search]).launch();
     Ok(())
 }
