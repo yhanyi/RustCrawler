@@ -1,3 +1,4 @@
+// parser.rs
 use scraper::{ Html, Selector };
 use url::Url;
 
@@ -14,6 +15,7 @@ pub fn extract_links(content: &str, base_url: &str) -> Result<Vec<String>, url::
             }
         }
     }
+
     Ok(links)
 }
 
@@ -21,6 +23,9 @@ pub fn extract_text(content: &str) -> String {
     let document = Html::parse_document(content);
     document.tree
         .values()
-        .filter_map(|n| n.as_text())
-        .collect()
+        .filter_map(|node| node.as_text())
+        .map(|text| text.text.trim())
+        .filter(|text| !text.is_empty())
+        .collect::<Vec<_>>()
+        .join(" ")
 }
